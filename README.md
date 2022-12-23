@@ -10,5 +10,5 @@ cd montador && make clean all
 
 ### Para rodar o programa
 ```
-./build/montador
+./build/apps/montador
 ```
