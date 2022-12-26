@@ -1,0 +1,11 @@
+L1: EQU 1
+SECTION text
+INPUT VAR
+IF L1
+LOAD VAR
+
+SECTION DATA
+VAR: CONST -1
+
+
+; teste usando 1 EQU

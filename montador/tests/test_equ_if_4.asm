@@ -1,0 +1,7 @@
+SECTION TEXT
+OUTPUT A
+SECTION DATA
+
+A: CONST 3
+
+; teste sem EQU
