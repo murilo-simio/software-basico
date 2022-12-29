@@ -18,6 +18,7 @@ void assemble(char* file_in, char* file_out) {
     int line_index = 0, addr = 0;
     string line;
     vector<string> tokens;
+
     bool data = false;
     bool error = false;
     bool text = false;
@@ -35,6 +36,7 @@ void assemble(char* file_in, char* file_out) {
 
         // Copia os tokens para o vetor de tokens
         while(str >> token) {
+            cout << token << endl;
             tokens.push_back(upper(token));     // Transforma tudo em maiuscula
         }
 
@@ -100,8 +102,10 @@ void assemble(char* file_in, char* file_out) {
                         if(text){
                             cout << file_in << ":" << line_index << ": error: Semantic Error: ";
                             cout << "Text Redefined" << endl;
-                            error = true;  
+                            error = true;
+                            cout << "!!!!!" << endl;
                         }
+                        cout << "??????" << endl;
                         text = true;
                     } else if(line == "SECTION DATA"){
                         if(data){
@@ -473,6 +477,25 @@ bool lexic_err(const string& label, int line) {
 
     return true;
 }
+
+std::map<std::string, int> operacoes = 
+{
+    {"ADD",    1},   
+    {"SUB",    2},
+    {"MUL",    3},
+    {"DIV",    4},
+    {"JMP",    5},
+    {"JMPN",   6},
+    {"JMPP",   7},
+    {"JMPZ",   8},
+    {"COPY",   9},
+    {"LOAD",   10},
+    {"STORE",  11},
+    {"INPUT",  12},
+    {"OUTPUT", 13},
+    {"STOP",   14}
+};
+
 
 int opcode(const string& str){
     return operacoes[str];

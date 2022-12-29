@@ -1,7 +1,10 @@
 #include <iostream>
 #include <cstring>
+#include <string>
 
 #include "../include/preprocessor.hpp"
+#include "assembler.h"
+// #include "assemble2.h"
 
 int main(int argc, char *argv[]) {
 
@@ -23,7 +26,9 @@ int main(int argc, char *argv[]) {
     PreProcessor(input_file, ".mcr");
 
   } else if(op_type == "-o") {
-    std::cout << "processo de traducao" << std::endl;
+    char file_in[255];
+    strcpy(file_in, argv[2]);
+    assemble(file_in, "teste.o");
 
   } else {
     std::cout << "Operacao invalida!" << std::endl;
