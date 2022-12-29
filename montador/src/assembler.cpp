@@ -30,14 +30,14 @@ void assemble(char* file_in, char* file_out) {
     while(getline(input_file, line)){
         istringstream str(line);
         string token;
-
+        
         // Limpa o vetor de tokens e coloca o indice na primeira linha
         tokens.clear();
         line_index++;
 
         // Copia os tokens para o vetor de tokens
         while(str >> token) {
-            tokens.push_back(token);
+            tokens.push_back(upper(token));     // Transforma tudo em maiuscula
         }
 
         switch(tokens.size()){
@@ -383,6 +383,13 @@ char* string_maiusc(const char* s) {
   }
 }
 
+string upper(string s){
+    for(int i=0;i<s.length();i++){
+        s[i] = toupper(s[i]);
+    }
+    return s;
+}
+
 bool lexic_err(const string& label, int line) {
     if(label.at(0) >= '0' && label.at(0) <= '9'){
         cout << file_name_globlal << ":" << line << ": error: Lexical Error: "; 
@@ -404,62 +411,3 @@ bool lexic_err(const string& label, int line) {
 int opcode(const string& str){
     return operacoes[str];
 }
-
-/*
-Linha Linha::getToken(std::string s, int line){
-    
-    int index = 0, dois_p = 0, erros = 0;
-    string temp, buff = "";
-    string aux[10] = {"","","",""};
-
-    if(string::npos == s.find(DOIS_PTS))
-        index = 1;  // Não há rótulos na linha
-
-    for(char& c : s){
-        if(c == DOIS_PTS)
-            dois_p++;   // Conta quantos rótulos numa mesma linha
-        
-        if(c == PONTO_VIR)
-            break;  // Verifica o fim da linha
-
-        temp = c;
-        if(!(pontos.find(temp) != pontos.end())){
-            buff += c;  // Verifca se não é " ", ":", ","
-        }else{
-            aux[index] = buff;
-            buff = "";
-            index++;
-        }
-    }
-    aux[index] = buff;
-
-    string labels[2];
-
-    // Trata erro de mais de 1 label por linha
-    if(dois_p > 1) {     // Se tiver mais de uma label na mesma linha
-        for(int i=1;i<dois_p;i++) {
-            labels[i-1] = aux[i];   // Coloca a 2 label num array temp
-        }
-
-        for(int i=1;i<index;i++) {      // Corrige as posicoes
-            aux[i] = aux[i+(dois_p-1)];
-        }
-
-        index -= (dois_p + 1);
-        erros++;
-
-        cout << file_name_globlal << ":" << line << ": error: Syntax Error: "; 
-        cout << dois_p << "labels in the same line!" << endl;
-    }
-
-    // Gera a linha com a label, opcode e argumentos
-    Linha linha;
-
-    linha.label = aux[0];
-    linha.op = aux[1];
-    linha.arg1 = aux[2];
-    linha.arg2 = aux[3];
-
-
-    return linha;
-}*/
