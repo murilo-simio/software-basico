@@ -1,6 +1,5 @@
-#include <set>
-#include <string>
 #include <map>
+#include <string>
 
 #define ADD 1
 #define SUB 2
@@ -39,5 +38,3 @@ std::map<std::string, int> operacoes =
     {"OUTPUT", 13},
     {"STOP",   14}
 };
-
-std::set<std::string> pontos {" ", ":", ","};
