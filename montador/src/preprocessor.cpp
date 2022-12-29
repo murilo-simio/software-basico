@@ -1,13 +1,4 @@
 #include "../include/preprocessor.hpp"
-#include <iostream>
-#include <fstream>
-#include <cstring>
-#include <map>
-#include <vector>
-#include <algorithm>
-
-#define WHITESPACE " "
-#define NEWLINE "\n"
 
 std::map <std::string, std::string> ext_map = {{".pre", ".asm"}, {".mcr", ".pre"}, {".obj", ".mcr"}};
 
@@ -276,14 +267,18 @@ void ProcessEquIf(std::vector<std::string>* file_content, std::map <std::string,
 
     for(long unsigned int i = 0; i < file_content->size(); i++) {
         strcpy(str, (*file_content)[i].c_str());
-        line_token = strtok(str, " ");
+        line_token = strtok(str, "\t ");
+
+        if(!line_token) {
+            continue;
+        }
 
         // criacao dos tokens da linha
         int count_token = 0;
         while(line_token) {
             token[count_token] = line_token;
             count_token++; // armazena qtd de tokens criados
-            line_token = strtok(NULL, " "); // aponta para proximo token da linha
+            line_token = strtok(NULL, "\t "); // aponta para proximo token da linha
 
         }
 
@@ -355,19 +350,19 @@ void FindEQU(std::vector<std::string>* file_content, std::map <std::string, std:
     for(long unsigned int i = 0; i < file_content->size(); i++) {
 
         strcpy(str, (*file_content)[i].c_str());
-        line_token = strtok(str, " ");
+        line_token = strtok(str, "\t ");
 
         // criacao dos tokens da linha
-        int j = 0;
+        int count_token = 0;
         while(line_token) {
-            token[j] = line_token;
-            j++; // qtd de tokens criados
-            line_token = strtok(NULL, " "); // aponta para proximo token da linha
+            token[count_token] = line_token;
+            count_token++; // qtd de tokens criados
+            line_token = strtok(NULL, "\t "); // aponta para proximo token da linha
         }
 
-        temp_str = token[0];
+        temp_str = token[1];
         std::transform(temp_str.begin(), temp_str.end(), temp_str.begin(), ::toupper);
-        if(temp_str == "SECTION") {
+        if(temp_str != "EQU") {
             // Remove as instrucoes de definicao de EQU do vetor
             (*file_content).erase((*file_content).begin(), (*file_content).begin() + i);
             return ;

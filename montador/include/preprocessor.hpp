@@ -1,9 +1,15 @@
 #ifndef PREPROCESSOR_H
 #define PREPROCESSOR_H
 
-#include <string>
+#include <iostream>
+#include <fstream>
+#include <cstring>
 #include <map>
 #include <vector>
+#include <algorithm>
+
+#define WHITESPACE " "
+#define NEWLINE "\n"
 
 void PreProcessor(std::string, std::string);
 void FindEQU(std::vector<std::string>*, std::map <std::string, std::string>*);
