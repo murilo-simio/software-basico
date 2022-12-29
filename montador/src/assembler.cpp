@@ -21,14 +21,13 @@ void assemble(char* file_in, char* file_out) {
     bool error = false;
     bool text = false;
     bool data = false;
+    bool begin = false;
 
-    map<string, int> ts; // Tabela de simbolos
     vector<string> td; // Tabela de definicao
+    map<string, int> ts; // Tabela de simbolos
     map<string, vector<int>> tu; // Tabela de uso
 
-    while(!input_file.eof()){
-        getline(input_file, line);
-
+    while(getline(input_file, line)){
         istringstream str(line);
         string token;
 
@@ -95,7 +94,7 @@ void assemble(char* file_in, char* file_out) {
                     if(tokens.at(1) == "STOP" || tokens.at(1) == "SPACE") {
                         addr++;
                     } else if(tokens.at(0) == "BEGIN") {
-                        // Fazer alg coisa
+                        begin = true;
                     } else if(tokens.at(1) != "EXTERN") {
                         if((tamanho_instr(tokens.at(1).c_str()) == 2) || tokens.at(0) == "COPY") {
                             cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
@@ -159,7 +158,207 @@ void assemble(char* file_in, char* file_out) {
             }   // Case 2
             case 3:
             {
-                return;
+                if(tokens.at(0).back() == DOIS_PTS) {
+                    map<string, int>::iterator temp_token;
+                    
+                    tokens.at(0).pop_back();
+                    string label = tokens.at(0);
+
+                    temp_token = ts.find(label);
+                    if(temp_token == ts.end()) {
+                        if(!lexic_err(label, line_index))
+                            error=true;
+                        ts.insert(pair<string, int>(label, addr));
+                    } else {
+                        cout << file_in << ":" << line_index << ": error: Semantic Error: ";
+                        cout << "Label Redefined" << endl;
+                        error = true;  
+                    }
+
+                    if(tokens.at(1) == "CONST") {
+                        addr++;
+                    } else if(tamanho_instr(tokens.at(1).c_str()) == 2) {
+                        for(auto& c : tu){
+                            if(c.first == tokens.at(2)){
+                                c.second.push_back(addr+1);
+                            }
+                        }
+                        addr+=2;
+                    } else {
+                        if(tokens.at(1) == "STOP" || tokens.at(1) == "COPY"){
+                            cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
+                            cout << "Invalid arguments" << endl;
+                            error = true;
+                        } else {
+                            cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
+                            cout << "Invalid instruction" << endl;
+                            error = true;
+                        }
+                    }
+                } else if(tokens.at(0) == "COPY") {
+                    for(auto& c:tu) {
+                        if(c.first == tokens.at(1))
+                            c.second.push_back(addr+1);
+                        if(c.first == tokens.at(2))
+                            c.second.push_back(addr+2);
+                    }
+                    addr+=3;
+                } else {
+                    cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
+                    cout << "Invalid arguments" << endl;
+                    error = true;
+                }
+                break;
+            }
+            case 4:
+            {
+                if(tokens.at(0).back() == DOIS_PTS) {
+                    map<string, int>::iterator temp_token;
+                    
+                    tokens.at(0).pop_back();
+                    string label = tokens.at(0);
+
+                    temp_token = ts.find(label);
+                    if(temp_token == ts.end()) {
+                        if(!lexic_err(label, line_index))
+                            error=true;
+                        ts.insert(pair<string, int>(label, addr));
+                    } else {
+                        cout << file_in << ":" << line_index << ": error: Semantic Error: ";
+                        cout << "Label Redefined" << endl;
+                        error = true;  
+                    }
+
+                    if(tokens.at(1) == "COPY"){
+                        for(auto& c:tu) {
+                            if(c.first == tokens.at(2))
+                                c.second.push_back(addr+1);
+                            if(c.first == tokens.at(3))
+                                c.second.push_back(addr+2);
+                        }
+                        addr+=3;
+                    } else {
+                        cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
+                        cout << "Invalid instruction" << endl;
+                        error = true;
+                    }
+                } else {
+                    cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
+                    cout << "Invalid instruction" << endl;
+                    error = true;
+                }
+                break;
+            }
+            default:
+            {
+                cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
+                cout << "Invalid arguments" << endl;
+                error = true;
+                break;
+            }
+        }
+    }
+
+    if(!text){
+        cout << file_in << ": error: Semantic Error: "; 
+        cout << "No TEXT section" << endl;
+        error = true;
+    }
+
+    input_file.close();
+
+    ofstream output_file(file_out, ofstream::out);
+    if(!output_file.good()){
+        cout << "Problema ao ler arquivo de saida!" << endl;
+        return;
+    }
+
+    if(begin){
+        output_file << "USE TABLE" << endl;
+        for(auto& c : tu){
+            output_file << c.first << " ";
+            for(unsigned i=0;i<c.second.size();i++){
+                output_file << c.second.at(i) << " ";
+            }
+            output_file << endl;
+        }
+
+        output_file << endl << "DEFINITION TABLE" << endl;
+        for(unsigned i=0;i<td.size();i++){
+            output_file << td.at(i) << " ";
+            for(auto& c : ts) {
+                if(c.first == td.at(i)){
+                    output_file << c.second << endl;
+                    break;
+                }
+            }
+        }
+        output_file << endl;
+    }
+
+    ifstream input_file1(file_in, ifstream::in);
+
+    if(!input_file1.good()) {
+        cout << "Problema ao ler arquivo de entrada!" << endl;
+        return;
+    }
+
+    map<string,int>::iterator token_ts;
+    map<string, vector<int>>::iterator token_tu;
+
+    while(getline(input_file1, line)) {
+        istringstream str(line);
+        string token;
+
+        tokens.clear();
+        line_index++;
+
+        while(str >> token) {
+            tokens.push_back(token);
+        }
+
+        switch(tokens.size()){
+            case 1:
+            {
+                if(tokens.at(0) == "STOP"){
+                    output_file << opcode(tokens.at(0)) << " ";
+                }
+                break;
+            }
+            case 2:
+            {
+                if(tokens.at(0).back() == DOIS_PTS) {
+                    if(tokens.at(0) == "STOP"){
+                        output_file << opcode("STOP") << " ";
+                    }else if(tokens.at(1) == "SPACE"){
+                        output_file << "0";
+                    }
+                } else if (tamanho_instr(tokens.at(0).c_str()) == 2){
+                    output_file << opcode(tokens.at(0)) << " ";
+                    token_ts = ts.find(tokens.at(1));
+                    if(lexic_err(tokens.at(1), line_index)){
+                        if(token_ts == ts.end()){
+                            token_tu = tu.find(tokens.at(1));
+                            if(token_tu == tu.end()){
+                                cout << file_in << ":" << line_index << ": error: Semantic Error: ";
+                                cout << "Label Undefined" << endl;
+                                error = true; 
+                                output_file << tokens.at(1) << " ";
+                            } else {
+                                output_file << "0 ";
+                            }
+                        } else {
+                            output_file << ts.find(tokens.at(1))->second << " ";
+                        }
+                    } else {
+                        error=true;
+                    }
+                }
+                break;
+            }
+            case 3:
+            {
+                
             }
         }
     }
@@ -200,6 +399,10 @@ bool lexic_err(const string& label, int line) {
     }
 
     return true;
+}
+
+int opcode(const string& str){
+    return operacoes[str];
 }
 
 /*

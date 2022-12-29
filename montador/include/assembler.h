@@ -23,6 +23,7 @@ int tamanho_instr(const char* token);
 char* string_maiusc(const char* s);
 bool lexic_err(const std::string& label, int line);
 void assemble(char* file_in, char* file_out);
+int opcode(const std::string& str);
 
 
 #endif // ASSEMBLER_H__
