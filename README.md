@@ -14,8 +14,9 @@ cd montador && make clean all
 ```
 
 ### Alunos
-Aline
-Murilo Simionato Arnemann - 18/0107453
+
+* Aline
+* Murilo Simionato Arnemann - 18/0107453
 
 ### Ambiente de desenvolvimento
 ```
