@@ -21,7 +21,6 @@ void assemble(char* file_in, char* file_out) {
     bool error = false;
     bool text = false;
     bool data = false;
-    bool begin = false;
 
     vector<string> td; // Tabela de definicao
     map<string, int> ts; // Tabela de simbolos
@@ -37,14 +36,14 @@ void assemble(char* file_in, char* file_out) {
 
         // Copia os tokens para o vetor de tokens
         while(str >> token) {
-            tokens.push_back(upper(token));
+            tokens.push_back(upper(token));     // Transforma tudo em maiuscula
         }
 
         switch(tokens.size()){
             case 1:     // Caso só tenha um token
             {
                 // Se esse token nao for stop nem end chama um erro
-                if(tokens.at(0) != "STOP" && tokens.at(0) != "END"){
+                if(tokens.at(0) != "STOP"){
                     if(tamanho_instr(tokens.at(0).c_str()) == 2 || tokens.at(0) == "COPY"){
                         cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
                         cout << "Invalid number of arguments" << endl;
@@ -84,35 +83,12 @@ void assemble(char* file_in, char* file_out) {
                         error = true;
                     }
 
-                    if (tokens.at(1) == "EXTERN") { // Verifica se é uma var externa
-                        vector<int> e_addr;
-                        tu.insert(pair<string, vector<int>>(label, e_addr));
-                    } else {
-                        ts.insert(pair<string, int>(label, addr));
-                    }
-
                     if(tokens.at(1) == "STOP" || tokens.at(1) == "SPACE") {
                         addr++;
-                    } else if(tokens.at(0) == "BEGIN") {
-                        begin = true;
-                    } else if(tokens.at(1) != "EXTERN") {
-                        if((tamanho_instr(tokens.at(1).c_str()) == 2) || tokens.at(0) == "COPY") {
-                            cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
-                            cout << "Invalid arguments" << endl;
-                            error = true;
-                        }
                     } else {
                         cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
                         cout << "Invalid instruction" << endl;
                         error = true;
-                    }
-                } else if(tokens.at(0) == "PUBLIC") {
-                    if(find(td.begin(), td.end(), tokens.at(1)) == td.end()) {
-                        td.push_back(tokens.at(1));
-                    } else {
-                        cout << file_in << ":" << line_index << ": error: Semantic Error: ";
-                        cout << "Public Redefinition" << endl;
-                        error = true;                        
                     }
                 } else if(tamanho_instr(tokens.at(0).c_str()) == 2) {
                     for(auto& c : tu){
@@ -264,36 +240,12 @@ void assemble(char* file_in, char* file_out) {
         cout << "No TEXT section" << endl;
         error = true;
     }
-
     input_file.close();
 
     ofstream output_file(file_out, ofstream::out);
     if(!output_file.good()){
         cout << "Problema ao ler arquivo de saida!" << endl;
         return;
-    }
-
-    if(begin){
-        output_file << "USE TABLE" << endl;
-        for(auto& c : tu){
-            output_file << c.first << " ";
-            for(unsigned i=0;i<c.second.size();i++){
-                output_file << c.second.at(i) << " ";
-            }
-            output_file << endl;
-        }
-
-        output_file << endl << "DEFINITION TABLE" << endl;
-        for(unsigned i=0;i<td.size();i++){
-            output_file << td.at(i) << " ";
-            for(auto& c : ts) {
-                if(c.first == td.at(i)){
-                    output_file << c.second << endl;
-                    break;
-                }
-            }
-        }
-        output_file << endl;
     }
 
     ifstream input_file1(file_in, ifstream::in);
@@ -384,7 +336,7 @@ char* string_maiusc(const char* s) {
 }
 
 string upper(string s){
-    for(int i=0;i<s.length();i++){
+    for(unsigned i=0;i<s.length();i++){
         s[i] = toupper(s[i]);
     }
     return s;
@@ -400,7 +352,7 @@ bool lexic_err(const string& label, int line) {
     for(auto c : label){
         if(!((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c == '_'))) {
             cout << file_name_globlal << ":" << line << ": error: Lexical Error: "; 
-            cout << "label contains with invalid characters" << endl;
+            cout << "label contains invalid characters" << endl;
         return false;
         }
     }
