@@ -20,5 +20,8 @@ int opcode(const std::string& str);
 char* string_maiusc(const char* s);
 int tamanho_instr(const char* token);
 std::string upper(std::string s);
+std::string processa_primeiro_arg(std::string const& s, char t);
+std::string processa_segundo_arg(std::string const& s, char t);
+bool is_number(std::string const& s);
 
 #endif // ASSEMBLER_H__

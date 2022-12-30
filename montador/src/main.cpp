@@ -26,9 +26,13 @@ int main(int argc, char *argv[]) {
     PreProcessor(input_file, ".mcr");
 
   } else if(op_type == "-o") {
-    char file_in[255];
+    char file_in[255], file_out[255];
     strcpy(file_in, argv[2]);
-    assemble(file_in, "teste.o");
+    strcat(file_in, ".mcr");
+    strcpy(file_out, argv[2]);
+    strcat(file_out, ".obj");
+    
+    assemble(file_in, file_out);
 
   } else {
     std::cout << "Operacao invalida!" << std::endl;

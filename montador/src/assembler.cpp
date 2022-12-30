@@ -106,7 +106,7 @@ void assemble(char* file_in, char* file_out) {
                             cout << "Invalid number of arguments" << endl;
                         } else {
                             cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
-                            cout << "Invalid instrction" << endl;
+                            cout << "Invalid instruction" << endl;
                         }
                         error = true;
                     }
@@ -143,22 +143,28 @@ void assemble(char* file_in, char* file_out) {
                         }
                         data = true;
                     } else {
-                        
                         if(tokens.at(0) == "STOP") {
                             cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
                             cout << "Invalid arguments" << endl;
                             error = true;
-                        } else if (tokens.at(1) == "COPY"){
-                            cout << "entra aqui" << endl;
-                            string antes = processa_virgula_antes(tokens.at(2));
-                            string depois = processa_virgula_depois(tokens.at(2));
-                            for(auto& c:tu) {
-                                if(c.first == antes)
-                                    c.second.push_back(addr+1);
-                                if(c.first == depois)
-                                    c.second.push_back(addr+2);
+                        } else if (tokens.at(0) == "COPY"){
+                            string::size_type pos = tokens.at(1).find(',');
+                            if(pos != string::npos){
+                                string antes = processa_primeiro_arg(tokens.at(1), ',');
+                                string depois = processa_segundo_arg(tokens.at(1), ',');
+                                for(auto& c:tu) {
+                                    if(c.first == antes)
+                                        c.second.push_back(addr+1);
+                                    if(c.first == depois)
+                                        c.second.push_back(addr+2);
+                                }
+                                addr+=3;
+                                break;
+                            } else {
+                                cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
+                                cout << "Invalid arguments" << endl;
+                                error = true;
                             }
-                            addr+=3;
                         } else {
                             cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
                             cout << "Invalid instruction" << endl;
@@ -199,8 +205,46 @@ void assemble(char* file_in, char* file_out) {
                             }
                         }
                         addr+=2;
+                    } else if(tokens.at(1) == "COPY"){
+                        string::size_type pos = tokens.at(2).find(',');
+                        if(pos != string::npos) {
+                            string antes = processa_primeiro_arg(tokens.at(2), ',');
+                            string depois = processa_segundo_arg(tokens.at(2), ',');
+                            for(auto& c:tu) {
+                                if(c.first == antes)
+                                    c.second.push_back(addr+1);
+                                if(c.first == depois)
+                                    c.second.push_back(addr+2);
+                            }
+                            addr+=3;
+                            break;
+                        } else {
+                            cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
+                            cout << "Invalid arguments" << endl;
+                            error = true;
+                        }
+                    } else if(tokens.at(1) == "SPACE") {
+                        string::size_type pos = tokens.at(2).find('+');
+                        if(pos != string::npos) { // caso space tenha argumento tipo X+2
+                            string antes = processa_primeiro_arg(tokens.at(2), '+');
+                            string depois = processa_segundo_arg(tokens.at(2), '+');
+                            // oq faz aqui????
+                        } else {
+                            if(is_number(tokens.at(2))) {
+                                addr += stoi(tokens.at(2));
+                            } else {
+                                cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
+                                cout << "Invalid arguments" << endl;    // nao sei se o erro eh esse msm
+                                error = true;
+                            }
+                            // for(auto& c : tu){
+                            //     if(c.first == tokens.at(2)){
+                            //         c.second.push_back(addr+1);
+                            //     }
+                            // }
+                        }
                     } else {
-                        if(tokens.at(1) == "STOP" || tokens.at(1) == "COPY"){
+                        if(tokens.at(1) == "STOP"){
                             cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
                             cout << "Invalid arguments" << endl;
                             error = true;
@@ -210,15 +254,17 @@ void assemble(char* file_in, char* file_out) {
                             error = true;
                         }
                     }
-                } else if(tokens.at(0) == "COPY") {
-                    for(auto& c:tu) {
-                        if(c.first == tokens.at(1))
-                            c.second.push_back(addr+1);
-                        if(c.first == tokens.at(2))
-                            c.second.push_back(addr+2);
-                    }
-                    addr+=3;
-                } else {
+                }
+                // else if(tokens.at(0) == "COPY") {
+                //     for(auto& c:tu) {
+                //         if(c.first == tokens.at(1))
+                //             c.second.push_back(addr+1);
+                //         if(c.first == tokens.at(2))
+                //             c.second.push_back(addr+2);
+                //     }
+                //     addr+=3;
+                // }
+                else {
                     
                     cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
                     cout << "Invalid arguments" << endl;
@@ -303,11 +349,24 @@ void assemble(char* file_in, char* file_out) {
     while(getline(input_file1, line)) {
         istringstream str(line);
         string token;
+        bool is_copy_instr = false;
 
         tokens.clear();
         line_index++;
 
         while(str >> token) {
+            if(token == "COPY") {
+                is_copy_instr = true;
+                tokens.push_back(token);
+                continue;         
+            }
+            if(is_copy_instr) {
+                string antes = processa_primeiro_arg(token, ',');
+                string depois = processa_segundo_arg(token, ',');
+                tokens.push_back(antes);
+                tokens.push_back(depois);
+                continue;
+            }
             tokens.push_back(token);
         }
 
@@ -325,7 +384,7 @@ void assemble(char* file_in, char* file_out) {
                     if(tokens.at(0) == "STOP"){
                         output_file << opcode("STOP") << " ";
                     }else if(tokens.at(1) == "SPACE"){
-                        output_file << "0";
+                        output_file << "0" << " ";
                     }
                 } else if (tamanho_instr(tokens.at(0).c_str()) == 2){
                     output_file << opcode(tokens.at(0)) << " ";
@@ -379,12 +438,17 @@ void assemble(char* file_in, char* file_out) {
                     if(tokens.at(1) == "CONST"){
                         output_file << htod(tokens.at(2)) << " ";
                     }
+                    if(tokens.at(1) == "SPACE") {
+                        if(is_number(tokens.at(2))) {   // caso space tenha como arg so numero
+                            for(int i = 0; i < stoi(tokens.at(2)); i++)
+                                output_file << "0 ";
+                        }
+                    }
+                } else if(tokens.at(0) == "COPY") {
 
-                } else if(tokens.at(1) == "COPY") {
                     output_file << opcode(tokens.at(0)) << " ";
-                    tokens.at(1).pop_back();
+                    // tokens.at(1).pop_back();
                     token_ts = ts.find(tokens.at(1));
-
                     if(lexic_err(tokens.at(1), line_index)) {
                         if(token_ts == ts.end()) {
                             cout << file_in << ":" << line_index << ": error: Semantic Error: ";
@@ -398,7 +462,7 @@ void assemble(char* file_in, char* file_out) {
                         output_file << tokens.at(1) << " ";
                         error = true;
                     }
-
+                    // tokens.at(2).pop_back();
                     token_ts = ts.find(tokens.at(2));
                     if(lexic_err(tokens.at(2), line_index)){
                         if(token_ts == ts.end()) {
@@ -419,7 +483,7 @@ void assemble(char* file_in, char* file_out) {
             case 4:
             {
                 output_file << opcode(tokens.at(1)) << " ";
-                tokens.at(2).pop_back();
+                // tokens.at(2).pop_back();
                 token_ts = ts.find(tokens.at(2));
 
                 if(lexic_err(tokens.at(2), line_index)){
@@ -473,7 +537,7 @@ void assemble(char* file_in, char* file_out) {
     return;
 }
 
-int tamanho_instr(string token) {
+int tamanho_instr(char const* token) {
     string str = upper(token);
     if (str == "COPY") {
         return 3;
@@ -525,8 +589,8 @@ string htod(const string& s){
     return tmp;
 }
 
-string processa_virgula_antes(string const& s){
-    string::size_type pos = s.find(',');
+string processa_primeiro_arg(string const& s, char t){
+    string::size_type pos = s.find(t);
     if(pos != string::npos){
         return s.substr(0,pos);
     }else{
@@ -534,11 +598,19 @@ string processa_virgula_antes(string const& s){
     }
 }
 
-string processa_virgula_depois(string const& s){
-    string::size_type pos = s.find(',');
+string processa_segundo_arg(string const& s, char t){
+    string::size_type pos = s.find(t);
     if(pos != string::npos){
         return s.substr(pos+1);
     }else{
         return s;
     }
+}
+
+bool is_number(string const& s) {
+    for(char const &car : s) {
+        if(std::isdigit(car) == 0)
+            return false;
+    }
+    return true;
 }
