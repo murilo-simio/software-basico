@@ -248,11 +248,6 @@ void assemble(char* file_in, char* file_out) {
                                 cout << "Invalid arguments" << endl;    // nao sei se o erro eh esse msm
                                 error = true;
                             }
-                            // for(auto& c : tu){
-                            //     if(c.first == tokens.at(2)){
-                            //         c.second.push_back(addr+1);
-                            //     }
-                            // }
                         }
                     } else {
                         if(tokens.at(1) == "STOP"){
@@ -439,9 +434,20 @@ void assemble(char* file_in, char* file_out) {
                         output_file << htod(tokens.at(2)) << " ";
                     }
                     if(tokens.at(1) == "SPACE") {
+                        string::size_type pos = tokens.at(2).find('+');
                         if(is_number(tokens.at(2))) {   // caso space tenha como arg so numero
                             for(int i = 0; i < stoi(tokens.at(2)); i++)
                                 output_file << "0 ";
+                        } else if(pos != string::npos) { // caso space tenha argumento tipo X+2
+                            string antes = processa_primeiro_arg(tokens.at(2), '+');
+                            string depois = processa_segundo_arg(tokens.at(2), '+');
+                            for(int i=0;i<stoi(depois);i++){
+                                output_file << "0 ";
+                            }
+                        } else {
+                            cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
+                            cout << "Invalid arguments" << endl;    // nao sei se o erro eh esse msm
+                            error = true;
                         }
                     }
                 } else if(tokens.at(0) == "COPY") {
