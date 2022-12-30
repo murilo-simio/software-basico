@@ -165,7 +165,17 @@ void assemble(char* file_in, char* file_out) {
                                 cout << "Invalid arguments" << endl;
                                 error = true;
                             }
-                        } else {
+                        } else if(tokens.at(0) == "SPACE") {
+                            string::size_type pos = tokens.at(1).find('+');
+                            if(pos != string::npos) { // caso space tenha argumento tipo X+2
+                                string antes = processa_primeiro_arg(tokens.at(1), '+');
+                                string depois = processa_segundo_arg(tokens.at(1), '+');
+                                int end = 1 + stoi(depois);
+                                addr+=end;
+                            }else{
+                                addr+=1;
+                            }
+                        }else {
                             cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
                             cout << "Invalid instruction" << endl;
                             error = true;
@@ -228,7 +238,8 @@ void assemble(char* file_in, char* file_out) {
                         if(pos != string::npos) { // caso space tenha argumento tipo X+2
                             string antes = processa_primeiro_arg(tokens.at(2), '+');
                             string depois = processa_segundo_arg(tokens.at(2), '+');
-                            // oq faz aqui????
+                            int end = 1 + stoi(depois);
+                            addr+=end;
                         } else {
                             if(is_number(tokens.at(2))) {
                                 addr += stoi(tokens.at(2));
@@ -254,18 +265,7 @@ void assemble(char* file_in, char* file_out) {
                             error = true;
                         }
                     }
-                }
-                // else if(tokens.at(0) == "COPY") {
-                //     for(auto& c:tu) {
-                //         if(c.first == tokens.at(1))
-                //             c.second.push_back(addr+1);
-                //         if(c.first == tokens.at(2))
-                //             c.second.push_back(addr+2);
-                //     }
-                //     addr+=3;
-                // }
-                else {
-                    
+                } else {
                     cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
                     cout << "Invalid arguments" << endl;
                     error = true;
