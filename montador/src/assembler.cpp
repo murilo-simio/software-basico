@@ -4,6 +4,24 @@ using namespace std;
 
 char* file_name_globlal;
 
+std::map<std::string, int> operacoes = 
+{
+    {"ADD",    1},   
+    {"SUB",    2},
+    {"MUL",    3},
+    {"DIV",    4},
+    {"JMP",    5},
+    {"JMPN",   6},
+    {"JMPP",   7},
+    {"JMPZ",   8},
+    {"COPY",   9},
+    {"LOAD",   10},
+    {"STORE",  11},
+    {"INPUT",  12},
+    {"OUTPUT", 13},
+    {"STOP",   14}
+};
+
 void assemble(char* file_in, char* file_out) {
 
     ifstream input_file(file_in, ifstream::in);
@@ -36,45 +54,38 @@ void assemble(char* file_in, char* file_out) {
 
         // Copia os tokens para o vetor de tokens
         while(str >> token) {
-            cout << token << endl;
             tokens.push_back(upper(token));     // Transforma tudo em maiuscula
         }
 
-        switch(tokens.size()){
+       switch(tokens.size()){
             case 1:     // Caso só tenha um token
             {
-                if(tokens.at(0) != "STOP"){     // Se esse token nao for stop chama um erro
+                if(tokens.at(0) == "STOP"){     // Se for stop acresecenta 1 no endereço
+                    addr+=1;
+                } else {    // Se não, não conheco a instr
                     if(tamanho_instr(tokens.at(0).c_str()) == 2 || tokens.at(0) == "COPY"){
-                        cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
+                        cout << file_in << ":" << line_index << ": error: Syntax Error: ";
                         cout << "Invalid number of arguments" << endl;
                         error = true;
-                        break;
                     }
                 }
-
-                if(tokens.at(0) == "STOP"){     // Se for stop acresecenta 1 no endereço
-                    addr++;
-                    break;
-                } else {    // Se não, não conheco a instr
-                    cout << file_in << ":" << line_index << ": error: Syntax Error: ";
-                    cout << "Unknown instruction" << endl;
-                    error = true;
-                    break;
-                }
+                break;
             }
             case 2:     // Caso tenham 2 tokens
             {
-                map<string,int>::iterator token_ts;
-                map<string, vector<int>>::iterator token_tu;
-
-                if(tokens.at(0).back() == DOIS_PTS){    // Verifica se é uma label
+                if(tokens.at(0).back() == ':'){    // Verifica se é uma label
+                    map<string,int>::iterator token_ts;
+                    map<string, vector<int>>::iterator token_tu;
+                    
+                    
                     tokens.at(0).pop_back();
                     string label = tokens.at(0);
 
-                    if(!lexic_err(label, line_index)) // Verifica se há algum erro lexico na label
+                    if(!lexic_err(label, line_index)){ // Verifica se há algum erro lexico na label
                         error = true;
+                    }
 
-                    token_ts = ts.find(label);  
+                    token_ts = ts.find(label);
                     token_tu = tu.find(label);
 
                     if (token_ts != ts.end() || token_tu != tu.end()){  // Verifica se a label encontrada ja foi definido
@@ -83,14 +94,24 @@ void assemble(char* file_in, char* file_out) {
                         error = true;
                     }
 
+                    if(tokens.at(1) != "EXTERN"){
+                        ts.insert(pair<string, int>(label, addr));
+                    }
+
                     if(tokens.at(1) == "STOP" || tokens.at(1) == "SPACE") {     // Verifica se a instr depois da label é de 1 espaco so
                         addr++;
                     } else {
-                        cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
-                        cout << "Invalid instruction" << endl;
+                        if(tamanho_instr(tokens.at(1).c_str()) >= 2){
+                            cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
+                            cout << "Invalid number of arguments" << endl;
+                        } else {
+                            cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
+                            cout << "Invalid instrction" << endl;
+                        }
                         error = true;
                     }
                 } else if(tamanho_instr(tokens.at(0).c_str()) == 2) {   // Caso não tenha label verifica se é uma instr de 2 addrs
+                    
                     for(auto& c : tu){
                         if(c.first == tokens.at(1)){
                             c.second.push_back(addr+1);
@@ -98,16 +119,18 @@ void assemble(char* file_in, char* file_out) {
                     }
                     addr+=2;
                 } else {
+                    
                     if(line == "SECTION TEXT"){
+                        
                         if(text){
                             cout << file_in << ":" << line_index << ": error: Semantic Error: ";
                             cout << "Text Redefined" << endl;
                             error = true;
                             cout << "!!!!!" << endl;
                         }
-                        cout << "??????" << endl;
                         text = true;
                     } else if(line == "SECTION DATA"){
+                        
                         if(data){
                             cout << file_in << ":" << line_index << ": error: Semantic Error: ";
                             cout << "Data Redefined" << endl;
@@ -120,10 +143,22 @@ void assemble(char* file_in, char* file_out) {
                         }
                         data = true;
                     } else {
-                        if(tokens.at(0) == "STOP" || tokens.at(0) == "COPY") {
+                        
+                        if(tokens.at(0) == "STOP") {
                             cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
                             cout << "Invalid arguments" << endl;
                             error = true;
+                        } else if (tokens.at(1) == "COPY"){
+                            cout << "entra aqui" << endl;
+                            string antes = processa_virgula_antes(tokens.at(2));
+                            string depois = processa_virgula_depois(tokens.at(2));
+                            for(auto& c:tu) {
+                                if(c.first == antes)
+                                    c.second.push_back(addr+1);
+                                if(c.first == depois)
+                                    c.second.push_back(addr+2);
+                            }
+                            addr+=3;
                         } else {
                             cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
                             cout << "Invalid instruction" << endl;
@@ -136,7 +171,8 @@ void assemble(char* file_in, char* file_out) {
             }   // Case 2
             case 3:
             {
-                if(tokens.at(0).back() == DOIS_PTS) {
+                if(tokens.at(0).back() == ':') {
+                    
                     map<string, int>::iterator temp_token;
                     
                     tokens.at(0).pop_back();
@@ -144,6 +180,7 @@ void assemble(char* file_in, char* file_out) {
 
                     temp_token = ts.find(label);
                     if(temp_token == ts.end()) {
+                        
                         if(!lexic_err(label, line_index))
                             error=true;
                         ts.insert(pair<string, int>(label, addr));
@@ -182,6 +219,7 @@ void assemble(char* file_in, char* file_out) {
                     }
                     addr+=3;
                 } else {
+                    
                     cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
                     cout << "Invalid arguments" << endl;
                     error = true;
@@ -190,7 +228,7 @@ void assemble(char* file_in, char* file_out) {
             }
             case 4:
             {
-                if(tokens.at(0).back() == DOIS_PTS) {
+                if(tokens.at(0).back() == ':') {
                     map<string, int>::iterator temp_token;
                     
                     tokens.at(0).pop_back();
@@ -283,7 +321,7 @@ void assemble(char* file_in, char* file_out) {
             }
             case 2:
             {
-                if(tokens.at(0).back() == DOIS_PTS) {
+                if(tokens.at(0).back() == ':') {
                     if(tokens.at(0) == "STOP"){
                         output_file << opcode("STOP") << " ";
                     }else if(tokens.at(1) == "SPACE"){
@@ -314,7 +352,7 @@ void assemble(char* file_in, char* file_out) {
             }
             case 3:
             {
-                if(tokens.at(0).back() == DOIS_PTS) {
+                if(tokens.at(0).back() == ':') {
                     if(tamanho_instr(tokens.at(1).c_str()) == 2) {
                         output_file << opcode(tokens.at(1)) << " ";
                         token_ts = ts.find(tokens.at(2));
@@ -435,22 +473,17 @@ void assemble(char* file_in, char* file_out) {
     return;
 }
 
-int tamanho_instr(const char* token) {
-    string str(string_maiusc(token));
+int tamanho_instr(string token) {
+    string str = upper(token);
     if (str == "COPY") {
         return 3;
     } else if (str == "STOP") {
         return 1;
-    } else {
+    } else if (operacoes.find(str)->second){
         return 2;
+    } else {
+        return -1;
     }
-}
-
-char* string_maiusc(const char* s) {
-  string str(s);
-  for (char& c : str) {
-    c = toupper(c);
-  }
 }
 
 string upper(string s){
@@ -478,25 +511,6 @@ bool lexic_err(const string& label, int line) {
     return true;
 }
 
-std::map<std::string, int> operacoes = 
-{
-    {"ADD",    1},   
-    {"SUB",    2},
-    {"MUL",    3},
-    {"DIV",    4},
-    {"JMP",    5},
-    {"JMPN",   6},
-    {"JMPP",   7},
-    {"JMPZ",   8},
-    {"COPY",   9},
-    {"LOAD",   10},
-    {"STORE",  11},
-    {"INPUT",  12},
-    {"OUTPUT", 13},
-    {"STOP",   14}
-};
-
-
 int opcode(const string& str){
     return operacoes[str];
 }
@@ -509,4 +523,22 @@ string htod(const string& s){
         tmp = to_string(decimal);
     }
     return tmp;
+}
+
+string processa_virgula_antes(string const& s){
+    string::size_type pos = s.find(',');
+    if(pos != string::npos){
+        return s.substr(0,pos);
+    }else{
+        return s;
+    }
+}
+
+string processa_virgula_depois(string const& s){
+    string::size_type pos = s.find(',');
+    if(pos != string::npos){
+        return s.substr(pos+1);
+    }else{
+        return s;
+    }
 }
