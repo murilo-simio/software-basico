@@ -111,7 +111,6 @@ void assemble(char* file_in, char* file_out) {
                         error = true;
                     }
                 } else if(tamanho_instr(tokens.at(0).c_str()) == 2) {   // Caso não tenha label verifica se é uma instr de 2 addrs
-                    
                     for(auto& c : tu){
                         if(c.first == tokens.at(1)){
                             c.second.push_back(addr+1);
@@ -242,7 +241,12 @@ void assemble(char* file_in, char* file_out) {
                             addr+=end;
                         } else {
                             if(is_number(tokens.at(2))) {
-                                addr += stoi(tokens.at(2));
+                                int tmp = stoi(tokens.at(2)); 
+                                for(int i = 1; i < tmp; i++) {
+                                    label = tokens.at(0) + "+" + to_string(i);
+                                    ts.insert(pair<string, int>(label, addr + i));
+                                }
+                                addr += tmp;
                             } else {
                                 cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
                                 cout << "Invalid arguments" << endl;    // nao sei se o erro eh esse msm
@@ -384,6 +388,22 @@ void assemble(char* file_in, char* file_out) {
                 } else if (tamanho_instr(tokens.at(0).c_str()) == 2){
                     output_file << opcode(tokens.at(0)) << " ";
                     token_ts = ts.find(tokens.at(1));
+                    string::size_type pos = tokens.at(1).find('+');
+                    if(pos != string::npos) {
+                        if(token_ts == ts.end()){
+                            token_tu = tu.find(tokens.at(1));
+                            if(token_tu == tu.end()){
+                                cout << file_in << ":" << line_index << ": error: Semantic Error: ";
+                                cout << "Label Undefined" << endl;
+                                error = true; 
+                                output_file << tokens.at(1) << " ";
+                            }
+                        } else {
+                            output_file << ts.find(tokens.at(1))->second << " ";
+                        }
+                        break;
+                    }
+                    
                     if(lexic_err(tokens.at(1), line_index)){
                         if(token_ts == ts.end()){
                             token_tu = tu.find(tokens.at(1));
