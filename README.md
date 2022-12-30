@@ -15,7 +15,7 @@ cd montador && make clean all
 
 ### Alunos
 
-* Aline
+* Aline Mitiko Otsubo - 17/0004601
 * Murilo Simionato Arnemann - 18/0107453
 
 ### Ambiente de desenvolvimento
