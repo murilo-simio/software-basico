@@ -164,7 +164,7 @@ void assemble(char* file_in, char* file_out) {
                                 cout << "Invalid arguments" << endl;
                                 error = true;
                             }
-                        } else if(tokens.at(0) == "SPACE") {
+                        } else if(tokens.at(0) == "SPACE" || tokens.at(0) == "LOAD") {
                             string::size_type pos = tokens.at(1).find('+');
                             if(pos != string::npos) { // caso space tenha argumento tipo X+2
                                 string antes = processa_primeiro_arg(tokens.at(1), '+');
@@ -174,7 +174,7 @@ void assemble(char* file_in, char* file_out) {
                             }else{
                                 addr+=1;
                             }
-                        }else {
+                        } else {
                             cout << file_in << ":" << line_index << ": error: Syntax Error: "; 
                             cout << "Invalid instruction" << endl;
                             error = true;
@@ -232,7 +232,7 @@ void assemble(char* file_in, char* file_out) {
                             cout << "Invalid arguments" << endl;
                             error = true;
                         }
-                    } else if(tokens.at(1) == "SPACE") {
+                    } else if(tokens.at(1) == "SPACE" || tokens.at(1) == "LOAD") {
                         string::size_type pos = tokens.at(2).find('+');
                         if(pos != string::npos) { // caso space tenha argumento tipo X+2
                             string antes = processa_primeiro_arg(tokens.at(2), '+');
